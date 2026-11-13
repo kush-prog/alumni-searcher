@@ -323,13 +323,18 @@ The application uses these PhantomBuster API v2 calls, all authenticated with th
 
 ## 9. Configuration
 
-All settings are in `src/main/resources/application.properties` and can be overridden with environment variables.
+All settings are read from environment variables (see `src/main/resources/application.properties`). The database settings have **no fallback values**: if `DB_URL`, `DB_USERNAME` or `DB_PASSWORD` is missing, the application stops at startup and names the missing variable.
+
+For local development, run with `SPRING_PROFILES_ACTIVE=local`. The `local` profile (`application-local.properties`) supplies the local database defaults below.
 
 | Environment variable                 | Default                                      | Meaning                          |
 |--------------------------------------|----------------------------------------------|----------------------------------|
-| `DB_URL`                             | `jdbc:postgresql://localhost:5432/alumni_db` | Database address                 |
-| `DB_USERNAME`                        | `alumni_user`                                | Database user                    |
-| `DB_PASSWORD`                        | `alumni_password`                            | Database password                |
+| `DB_URL`                             | **required** (local profile: `jdbc:postgresql://localhost:5432/alumni_db`) | Database address (JDBC format) |
+| `DB_USERNAME`                        | **required** (local profile: `alumni_user`)  | Database user                    |
+| `DB_PASSWORD`                        | **required** (local profile: `alumni_password`) | Database password             |
+| `DB_POOL_SIZE`                       | `5`                                          | Maximum database connections     |
+| `JPA_DDL_AUTO`                       | `update`                                     | How the table is created/updated on startup |
+| `SPRING_PROFILES_ACTIVE`             | *(none)*                                     | Set to `local` for local development |
 | `PORT` / `SERVER_PORT`               | `8080`                                       | Port the API listens on (`PORT` is set automatically by hosts such as Render) |
 | `PHANTOMBUSTER_API_KEY`              | *(empty)*                                    | PhantomBuster API key            |
 | `PHANTOMBUSTER_AGENT_ID`             | *(empty)*                                    | Id of the LinkedIn Search Export agent |
@@ -358,6 +363,7 @@ Maven does not need to be installed; the included wrapper (`mvnw`) downloads it 
 ```bash
 cd alumni-searcher
 
+export SPRING_PROFILES_ACTIVE=local
 export PHANTOMBUSTER_API_KEY=your_api_key
 export PHANTOMBUSTER_AGENT_ID=your_agent_id
 
@@ -369,6 +375,7 @@ export PHANTOMBUSTER_AGENT_ID=your_agent_id
 ```powershell
 cd alumni-searcher
 
+$env:SPRING_PROFILES_ACTIVE="local"
 $env:PHANTOMBUSTER_API_KEY="your_api_key"
 $env:PHANTOMBUSTER_AGENT_ID="your_agent_id"
 
@@ -489,7 +496,7 @@ GRANT ALL PRIVILEGES ON DATABASE alumni_db TO alumni_user;
 
 ### Step 5 — Point the application at the database
 
-If you used the names and password above, nothing else is needed — they match the defaults in `application.properties`.
+If you used the names and password above and run with `SPRING_PROFILES_ACTIVE=local`, nothing else is needed — they match the defaults in `application-local.properties`.
 
 If you chose different values, set them before starting the application:
 
@@ -527,3 +534,16 @@ CREATE TABLE alumni (
     updated_at        TIMESTAMP(6) WITH TIME ZONE NOT NULL
 );
 ```
+
+---
+
+## 16. Deployment (Render, Docker)
+
+The repository includes a `Dockerfile` (multi-stage: Maven build, then a small Java 21 runtime image running as a non-root user).
+
+1. Create a **PostgreSQL** database on Render.
+2. Create a **Web Service** from this repository with runtime **Docker**, in the same region as the database.
+3. Set the environment variables: `DB_URL` (`jdbc:postgresql://<internal-host>:5432/<database>`), `DB_USERNAME`, `DB_PASSWORD`, `PHANTOMBUSTER_API_KEY`, `PHANTOMBUSTER_AGENT_ID`.
+4. After deployment, Swagger UI is at `https://<service>.onrender.com/swagger-ui.html`.
+
+Render passes the port in `PORT`, which the application uses automatically. Swagger uses the public `https` address because the application trusts the proxy's `X-Forwarded-*` headers.
