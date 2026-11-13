@@ -1,0 +1,348 @@
+{
+  "info": {
+    "name": "Alumni LinkedIn Profile Searcher",
+    "description": "Requests for the Alumni LinkedIn Profile Searcher API. Set the baseUrl variable if the app is not on http://localhost:8080.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    }
+  ],
+  "item": [
+    {
+      "name": "Search alumni (with pass-out year)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/alumni/search",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"university\": \"Stanford University\",\n  \"designation\": \"Software Engineer\",\n  \"passoutYear\": \"2020\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('200 OK with success status', () => {",
+              "  pm.response.to.have.status(200);",
+              "  pm.expect(pm.response.json().status).to.eql('success');",
+              "  pm.expect(pm.response.json().data).to.be.an('array');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Search alumni (without pass-out year)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/alumni/search",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"university\": \"Stanford University\",\n  \"designation\": \"Data Scientist\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('200 OK with success status', () => {",
+              "  pm.response.to.have.status(200);",
+              "  pm.expect(pm.response.json().status).to.eql('success');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get all saved alumni",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/alumni/all"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('200 OK with a list of alumni', () => {",
+              "  pm.response.to.have.status(200);",
+              "  pm.expect(pm.response.json().status).to.eql('success');",
+              "  pm.expect(pm.response.json().data).to.be.an('array');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Search alumni (invalid request - 400)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/alumni/search",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"university\": \"\",\n  \"passoutYear\": 1800\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('400 with field errors', () => {",
+              "  pm.response.to.have.status(400);",
+              "  const body = pm.response.json();",
+              "  pm.expect(body.status).to.eql('error');",
+              "  pm.expect(body.errors).to.have.property('university');",
+              "  pm.expect(body.errors).to.have.property('designation');",
+              "  pm.expect(body.errors).to.have.property('passoutYear');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Search alumni (pass-out year not a number - 400)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/alumni/search",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"university\": \"Stanford University\",\n  \"designation\": \"Software Engineer\",\n  \"passoutYear\": \"last year\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('400 bad request', () => pm.response.to.have.status(400));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Search alumni (wrong method - 405)",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/alumni/search"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('405 method not allowed', () => pm.response.to.have.status(405));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Search alumni (empty body {} - 400)",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/alumni/search",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('400 Search alumni (empty body {}', () => {",
+              "  pm.response.to.have.status(400);",
+              "  pm.expect(pm.response.json().status).to.eql('error');",
+              "  pm.expect(pm.response.json().errors).to.have.keys('university','designation');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Search alumni (no body - 400)",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/alumni/search",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": ""
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('400 Search alumni (no body', () => {",
+              "  pm.response.to.have.status(400);",
+              "  pm.expect(pm.response.json().status).to.eql('error');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Search alumni (university too long - 400)",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/alumni/search",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"university\": \"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\",\n  \"designation\": \"Software Engineer\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('400 Search alumni (university too long', () => {",
+              "  pm.response.to.have.status(400);",
+              "  pm.expect(pm.response.json().status).to.eql('error');",
+              "  pm.expect(pm.response.json().errors.university).to.eql('University name must be at most 200 characters');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Search alumni (pass-out year 2101 - 400)",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/alumni/search",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"university\": \"Stanford University\",\n  \"designation\": \"Software Engineer\",\n  \"passoutYear\": 2101\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('400 Search alumni (pass-out year 2101', () => {",
+              "  pm.response.to.have.status(400);",
+              "  pm.expect(pm.response.json().status).to.eql('error');",
+              "  pm.expect(pm.response.json().errors.passoutYear).to.eql('Pass-out year must be 2100 or earlier');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Search alumni (not JSON - 415)",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/alumni/search",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "text/plain"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "university=Stanford"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('415 Search alumni (not JSON', () => {",
+              "  pm.response.to.have.status(415);",
+              "  pm.expect(pm.response.json().status).to.eql('error');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Unknown URL (404)",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/alumni/unknown"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('404 Unknown URL (404)', () => {",
+              "  pm.response.to.have.status(404);",
+              "  pm.expect(pm.response.json().status).to.eql('error');",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
